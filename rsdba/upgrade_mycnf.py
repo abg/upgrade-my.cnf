@@ -124,7 +124,7 @@ class RewriteRule(object):
     [INFO] Rewriting option '%s'.  Reason: Stupid option.
     >>
     """
-    def __init__(self, options, reason='unknown'):
+    def __init__(self, options=None, reason='unknown'):
         self.options = options
         self.reason = reason
 
@@ -137,6 +137,20 @@ class RewriteRule(object):
 
         for option in self.options:
             yield Template(option).safe_substitute(key=key, value=value)
+
+class SlowLogRewriteRule(RewriteRule):
+    def __call__(self, key, value):
+        self.options = [
+            'slow-query-log = 1',
+            'slow-query-log-file = ${value}',
+            'log-slow-slave-statements',
+        ]
+        if value is None:
+            # don't output slow-query-log-file if a value wasn't previously set
+            # we'll default to the same host_name-slow.log
+            self.options.remove('slow-query-log-file = ${value}')
+        for line in super(SlowLogRewriteRule, self).__call__(key, value):
+            yield line
 
 class OptionRewriter(object):
     """Base OptionRewriter
@@ -180,12 +194,9 @@ class MySQL51OptionRewriter(OptionRewriter):
         'default-storage-engine = ${value}',
     ],
     reason="Deprecated in MySQL 5.0 in favor of default-storage-engine"),
-        'log-slow-queries' : RewriteRule([
-            'slow-query-log = 1',
-            'slow-query-log-file = ${value}',
-            'long-query-time = 1',
-            'log-slow-slave-statements',
-        ], reason='Logging options changed in MySQL 5.1'),
+        'log-slow-queries' : SlowLogRewriteRule(
+            reason='Logging options changed in MySQL 5.1'
+        ),
         'table-cache' : RewriteRule([
             'table-open-cache = ${value}',
             'table-definition-cache = ${value}',
