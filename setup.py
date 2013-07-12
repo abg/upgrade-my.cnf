@@ -22,6 +22,6 @@ setup(name='upgrade_mysql_config',
       ],
       entry_points="""
       [console_scripts]
-      upgrade_mysql_config = rsdba.upgrade_mycnf:main
+      upgrade_mysql_config = rsdba.upgrade_mysql_config:main
       """,
       )
