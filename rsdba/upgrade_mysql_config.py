@@ -242,6 +242,12 @@ class MySQL55OptionRewriter(MySQL51OptionRewriter):
         '--thread-handling=no-threads',
     ], reason="Deprecated and removed in MySQL 5.6")
 
+class MySQL56OptionRewriter(MySQL55OptionRewriter):
+    rules = dict(MySQL55OptionRewriter.rules)
+
+class MySQL57OptionRewriter(MySQL56OptionRewriter):
+    rules = dict(MySQL55OptionRewriter.rules)
+
 def parse(path):
     """Parse an iterable of lines into a list and option mapping
 
@@ -369,7 +375,7 @@ def main(args=None):
                       default='/etc/my.cnf',
                       help="my.cnf file to parse (default: %default)")
     parser.add_option('-t', '--target', metavar='<mysql-version>',
-                      choices=('5.1', '5.5'),
+                      choices=('5.1', '5.5', '5.6', '5.7'),
                       default='5.1',
                       help=("MySQL version to target the option file"
                             "(default: %default)")
