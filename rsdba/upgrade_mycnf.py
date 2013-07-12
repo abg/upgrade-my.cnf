@@ -252,10 +252,6 @@ def parse(path):
     can be found.  If an option is repeated multiple times it will
     have multiple entries in the option-mapping table.
     """
-    lines = []
-    # map interesting options -> offsets in lines[]
-    keys = {}
-
     # remaining !included .cnf to worry about
     paths = [path]
 
@@ -263,6 +259,9 @@ def parse(path):
     while paths:
         iterable = open(paths.pop(0), 'rb')
         section = None
+        lines = []
+        # map interesting options -> offsets in lines[]
+        keys = {}
         for idx, line in enumerate(iterable):
             lines.append(line)
             # trim righ-trailing whitespace
