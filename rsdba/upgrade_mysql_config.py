@@ -13,6 +13,7 @@ import re
 import difflib
 import optparse
 import logging
+import glob
 from string import Template
 
 LOG = logging.getLogger(__name__)
