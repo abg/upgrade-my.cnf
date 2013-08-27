@@ -84,7 +84,7 @@ def sanitize(line, lineno):
         return value
     return line
 
-KV_CRE = re.compile(r'(?P<key>[^=\s]+?)\s*(?:=\s*(?P<value>.*))?$')
+KV_CRE = re.compile(r'\s*(?P<key>[^=\s]+?)\s*(?:=\s*(?P<value>.*))?$')
 
 def parse_option(line):
     """Process a key/value directive according to MySQL syntax rules
