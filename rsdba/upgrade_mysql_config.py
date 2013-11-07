@@ -29,6 +29,7 @@ multi_valued_options = (
     'replicate-ignore-table',
     'replicate-wild-do-table',
     'replicate-wild-ignore-table',
+    'plugin-load',
 )
 
 # basic parsing helper methods
@@ -153,6 +154,27 @@ class SlowLogRewriteRule(RewriteRule):
         for line in super(SlowLogRewriteRule, self).__call__(key, value):
             yield line
 
+
+class InnoDBPluginRewriteRule(RewriteRule):
+    def __call__(self, key, value):
+        # strip all ha_innodb_plugin.so references; leave anything else
+        result = []
+        for option in value.split(';'):
+            plugin_data = option.split('=')
+            if len(plugin_data) == 2:
+                plugin_lib = plugin_data[1]
+            else:
+                plugin_lib = plugin_data[0]
+            if plugin_lib != 'ha_innodb_plugin.so':
+                result.append(option)
+        if result:
+            self.options = [ 'plugin-load = ' + ';'.join(result) ]
+        else:
+            self.options = []
+        for line in super(InnoDBPluginRewriteRule, self).__call__(key, value):
+            yield line
+
+
 class OptionRewriter(object):
     """Base OptionRewriter
 
@@ -242,6 +264,9 @@ class MySQL55OptionRewriter(MySQL51OptionRewriter):
     rules['one-thread'] = RewriteRule([
         '--thread-handling=no-threads',
     ], reason="Deprecated and removed in MySQL 5.6")
+    rules['ignore-builtin-innodb'] = RewriteRule([], reason="InnoDB plugin is now the default in 5.5")
+    rules["plugin-load"] = InnoDBPluginRewriteRule(
+        reason="InnoDB plugin is now the default in 5.5")
 
 class MySQL56OptionRewriter(MySQL55OptionRewriter):
     rules = dict(MySQL55OptionRewriter.rules)
@@ -315,7 +340,7 @@ def upgrade_config(path, rewriter):
         pending = {}
     
         for key, idx_list in keys.iteritems():
-            if len(idx_list) > 1 and key != 'set-variable':
+            if len(idx_list) > 1 and key != 'set-variable' and key not in multi_valued_options:
                 LOG.warning("Duplicate options for '%s'", key)
                 for idx, _, _ in idx_list:
                     LOG.warning("  - %d:%s", idx+1, lines[idx].rstrip())
